@@ -1,0 +1,37 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ["3.11"]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r linters.txt
+    - name: FastAPI
+      run: |
+          bash src/test.sh
+    - name: flake8
+      run: |
+          flake8 --count --max-line-length=120 --ignore=E402 --statistics .
+    - name: isort
+      run: |
+          isort --profile black .
+    - name: black
+      run: |
+          black --check --verbose --line-length=120 .
+    - name: mypy
+      run: |
+          mypy --ignore-missing-imports .
